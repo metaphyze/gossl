@@ -11,9 +11,9 @@ Of course, you'll first have to ensure that your domain name or names are actual
 
     /home/ubuntu> sudo ./gossl -simpleProxy=http://localhost:8080 -domains=mydomain.com,www.mydomain.com
 
-This lets you write your server in whatever language you want, and let gossl worry about the HTTPS.  This might be useful if it's difficult to set up HTTPS in your preferred development language or framework.
+This lets you write your server in whatever language you want, and lets gossl worry about the HTTPS.  This might be useful if it's difficult to set up HTTPS in your preferred development language or framework.
 
-### Example: Proxy to multiple servers through a mapping and serve static content also
+### Example: Proxy to multiple servers through a mapping and serve static content
 First, you'll need to write a proxy configuration file in json.  Here's an example.
 
        {
