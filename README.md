@@ -4,7 +4,7 @@ A simple proxy server that can easily provide HTTPS support through the Let's En
 ### Example: Host static content over HTTPS
 Here's how you could serve static content through HTTPS.  You might want to do this just to give your site visitors a warm fuzzy feeling from the little lock icon in the browser.  Sure, it's static content, but they don't know that.
 
-    /home/ubuntu> sudo ./gossl -staticDir=/path/to/your/static/content/dir
+    /home/ubuntu> sudo ./gossl -staticDir=/path/to/your/static/content/dir -domains=mydomain.com,www.mydomain.com
     
 ### Example: Run your primary server on a non-public port and proxy to it through gossl to provide HTTPS    
 Of course, you'll first have to ensure that your domain name or names are actually pointed to your server through your DNS.  Also, it's important to not expose your primary server port(8080, in this example) publicly.
@@ -13,7 +13,7 @@ Of course, you'll first have to ensure that your domain name or names are actual
 
 This lets you write your server in whatever language you want, and let gossl worry about the HTTPS.  This might be useful if it's difficult to set up HTTPS in your preferred development language or framework.
 
-### Example: Proxy to multiple servers through a mapping and still server static content.
+### Example: Proxy to multiple servers through a mapping and serve static content also
 First, you'll need to write a proxy configuration file in json.  Here's an example.
 
        {
@@ -39,9 +39,11 @@ Now pass the configuration file to gossl.
                   -staticDir=/path/to/your/static/content/dir \
                   -domains=mydomain.com,www.mydomain.com
 
-## Installing gossl as a service on Linux (systemd) so that it starts on machine boot.
+## Installing gossl as a service on Linux (systemd) so that it starts on machine boot
 You would most likely want to run gossl as a service.  gossl itself will provide you the instructions.
+
     /home/ubuntu> ./gossl -serviceInstallationInstructions
+    
 Which will print out this.
 
     Service installation instruction for Linux using systemd.
@@ -94,7 +96,7 @@ Which will print out this.
     > sudo journalctl -u myservice.service -f
 
 ### Command line options.
-Here's the complete list of command line options.  If you're serving static content, you should pay particular attention to the cacheControl options.  
+Here's the complete list of command line options.  If you're serving static content, you should pay particular attention to the cacheControl options. Not that you do NOT have to use gossl to server HTTPS requests.  You can run it over regular your HTTP on any port you want.  You could even run it over HTTPS on a different port though you probably wouldn't want to do that. 
 
     -cacheControlMaxAgeInSeconds int
         Only used when serving static files.
