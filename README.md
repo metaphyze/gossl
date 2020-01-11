@@ -2,7 +2,7 @@
 A simple proxy server that can easily provide HTTPS support through the Let's Encrypt certificate authority.  It can also serve static  content while proxying requests to other servers. 
 
 ### You can get it here
-You can download the [Ubuntu version here](https://linknotyetactive.com). It was built on Ubuntu 18.04LTS.  You don't need to install any library to run gossl.  It's a standalone executable.
+You can download the [Ubuntu version here](https://linknotyetactive.com). It was built on Ubuntu 18.04LTS.  You don't need to install any libraries to run gossl.  It's a standalone executable.
 
 ### Example: Host static content over HTTPS
 Here's how you could serve static content through HTTPS.  You might want to do this just to give your site visitors a warm fuzzy feeling from the little lock icon in the browser.  Sure, it's static content, but they don't know that.
