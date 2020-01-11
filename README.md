@@ -98,7 +98,7 @@ Which will print out this.
 ### Command line options.
 Here's the complete list of command line options.  If you're serving static content, you should pay particular attention to the cacheControl options (-cacheControlPublic,-cacheControlPrivate, and -cacheControlMaxAgeInSeconds). 
 
-_Note that you do NOT have to use gossl to server HTTPS requests.  You can run it over regular your HTTP on any port you want.  You could even run it over HTTPS on a different port though you probably wouldn't want to do that._ 
+_Note that you do NOT have to use gossl to serve HTTPS requests.  You can run it over regular your HTTP on any port you want using -httpPort=SOME_PORT.  You could even run it over HTTPS on a different port using -httpsPort=SOME_WEIRD_PORT though you probably wouldn't want to do that._ 
 
     -cacheControlMaxAgeInSeconds int
         Only used when serving static files.
