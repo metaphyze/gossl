@@ -17,6 +17,8 @@ I have not tested gossl on Windows, but it should work there too.
 Here's how you could serve static content through HTTPS.  You might want to do this just to give your site visitors a warm fuzzy feeling from the little lock icon in the browser.  Sure, it's static content, but they don't know that.
 
     /home/ubuntu> sudo ./gossl -staticDir=/path/to/your/static/content/dir -domains=mydomain.com,www.mydomain.com
+
+I'm currently using it to serve static files over HTTPS for my Android app [Doodleback](https://doodleback.com/).
     
 ### Example: Run your primary server on a non-public port and proxy to it through gossl to provide HTTPS    
 Of course, you'll first have to ensure that your domain name or names are actually pointed to your server through your DNS.  Also, it's important to not expose your primary server port(8080, in this example) publicly.
