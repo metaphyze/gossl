@@ -84,15 +84,15 @@ Which will print out this.
     > sudo systemctl start myservice.service
     > sudo systemctl enable myservice.service
 
-    If you update the service file, you'll to do this:
+    If you update the service file, you'll need to do this:
     > sudo systemctl stop myservice.service
     > sudo systemctl daemon-reload
     > sudo systemctl start myservice.service
 
-    To debug problems with starting the service
+    To debug problems with starting the service:
     >sudo systemctl status myservice.service
 
-    To see the service's current output (also useful for debugging)
+    To see the service's current output (also useful for debugging):
     > sudo journalctl -u myservice.service -f
 
 ### Command line options.
