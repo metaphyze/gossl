@@ -96,20 +96,25 @@ Which will print out this.
     > sudo journalctl -u myservice.service -f
 
 ### Command line options.
-Here's the complete list of command line options.  If you're serving static content, you should pay particular attention to the cacheControl options. Not that you do NOT have to use gossl to server HTTPS requests.  You can run it over regular your HTTP on any port you want.  You could even run it over HTTPS on a different port though you probably wouldn't want to do that. 
+Here's the complete list of command line options.  If you're serving static content, you should pay particular attention to the cacheControl options (-cacheControlPublic,-cacheControlPrivate, and -cacheControlMaxAgeInSeconds). 
+
+_Note that you do NOT have to use gossl to server HTTPS requests.  You can run it over regular your HTTP on any port you want.  You could even run it over HTTPS on a different port though you probably wouldn't want to do that._ 
 
     -cacheControlMaxAgeInSeconds int
         Only used when serving static files.
         For example, -cacheControlMaxAgeInSeconds=86400
         The maxium time in seconds that the response can be cached. (default 86400)
+        
     -cacheControlPrivate
         Only used when serving static files.
         For example, -cacheControlPrivate
         It indicates that the response can be cached only by clients.  It cannot be used with -cacheControlPublic.
+        
     -cacheControlPublic
         Only used when serving static files.
         For example, -cacheControlPublic
         It indicates that the response can be cached by clients and other proxies.  It cannot be used with -cacheControlPrivate.
+        
     -certCacheDir string
         Directory where certificates are stored
         For example, -certCacheDir=/path/to/cert/dir
@@ -117,24 +122,30 @@ Here's the complete list of command line options.  If you're serving static cont
         IMPORTANT NOTE: If you use a temp directory, it may be deleted on machine reboot.
         This could be important if your machine reboots frequently since Let's Encrypt is subject to rate limits.
         See:  https://letsencrypt.org/docs/rate-limits/
+        
     -domains string
         Comma delineated list of domains for which HTTPS requests should be accepted
         For example, -domains=yourdomain.com,www.yourdomain.com
         Be sure your nameservers are pointing your domain(s) to this server's ip address.
+        
     -dontGzipStaticResponse
         Only used when serving static files.
         For example, -dontGzipStaticResponse
         By default, responses served from the static content directory WILL be gzipped.  This option turns that OFF.
         You probably don't want this.
+        
     -httpPort int
         Port on which to receive HTTP requests
         For example, -httpPort=8080 (default 80)
+        
     -httpsPort int
         Port on which to receive HTTPS requests
         For example, -httpsPort=4443 (default 443)
+        
     -idleTimeoutInMs int
         Socket idle timeout in milliseconds
         For example, -idleTimeoutInMs=5000 (default 120000)
+        
     -proxyConfigFile string
         JSON file containing the proxy mappings
         For example, -proxyConfigFile=/path/to/proxy.config
@@ -202,18 +213,23 @@ Here's the complete list of command line options.  If you're serving static cont
     -readTimeoutInMs int
         Socket read timeout in milliseconds
         For example, -readTimeoutInMs=5000 (default 10000)
+        
     -serviceInstallationInstructions
         Display instructions on how to set gossl up as a service using systemd (Linux only instructions)
+        
     -simpleProxy string
         [required HTTP/HTTPS]://[required HOSTNAME/IPADDRESS]:[optional port]
         For example, -simpleProxy=https://yourdomain.com or -simpleHost=http://localhost:8080
+        
     -staticDir string
         Directory of static content to serve
         For example, -staticDir=/path/to/static/content/dir
         If -proxyConfigFile is specified, the request will first be checked against proxy mappings.
         If no proxy mapping is found, then we attempt to serve the request from this static content.
+        
     -version
         Display version number, which by the way is 1.0
+        
     -writeTimeoutInMs int
         Socket write timeout in milliseconds
         For example, -writeTimeoutInMs=5000 (default 10000)
