@@ -4,6 +4,13 @@ A simple proxy server that can easily provide HTTPS support through the Let's En
 ### You can get it here
 You can download the [Ubuntu version here](https://metaphyze-public.s3.amazonaws.com/gossl/releases/1.0/ubuntu18.04/gossl). It was built on Ubuntu 18.04LTS.  You don't need to install any libraries to run gossl.  It's a standalone executable.
 
+### Or you can build it yourself
+If you want to build gossl yourself, you'll need to install Go.  Many sites give instructions on this so I won't repeat them.  
+Here's a good one: [How to Install Go on Ubuntu 18.04](https://linuxize.com/post/how-to-install-go-on-ubuntu-18-04/).
+The executable above was built using the latest version of Go: 1.13.5.  Once Go is installed, you can build it by simply typing:
+
+    /home/ubuntu> go build YOUR_GO_WORK_DIR/src/gossl/gossl.go
+
 ### Example: Host static content over HTTPS
 Here's how you could serve static content through HTTPS.  You might want to do this just to give your site visitors a warm fuzzy feeling from the little lock icon in the browser.  Sure, it's static content, but they don't know that.
 
