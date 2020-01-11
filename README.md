@@ -11,6 +11,8 @@ The executable above was built using the latest version of Go: 1.13.5.  Once Go 
 
     /home/ubuntu> go build YOUR_GO_WORK_DIR/src/gossl/gossl.go
 
+I have not tested gossl on Windows, but it should work there too.
+
 ### Example: Host static content over HTTPS
 Here's how you could serve static content through HTTPS.  You might want to do this just to give your site visitors a warm fuzzy feeling from the little lock icon in the browser.  Sure, it's static content, but they don't know that.
 
