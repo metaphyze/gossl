@@ -1,6 +1,9 @@
 # gossl
 A simple proxy server that can easily provide HTTPS support through the Let's Encrypt certificate authority.  It can also serve static  content while proxying requests to other servers. 
 
+### You can get it here
+You can download the [Ubuntu version here](https://linknotyetactive.com) It was built on Ubuntu 18.04LTS.
+
 ### Example: Host static content over HTTPS
 Here's how you could serve static content through HTTPS.  You might want to do this just to give your site visitors a warm fuzzy feeling from the little lock icon in the browser.  Sure, it's static content, but they don't know that.
 
@@ -95,7 +98,7 @@ Which will print out this.
     To see the service's current output (also useful for debugging):
     > sudo journalctl -u myservice.service -f
 
-### Command line options.
+### Command line options
 Here's the complete list of command line options.  If you're serving static content, you should pay particular attention to the cacheControl options (-cacheControlPublic,-cacheControlPrivate, and -cacheControlMaxAgeInSeconds). 
 
 _Note that you do NOT have to use gossl to serve HTTPS requests.  You can run it over regular your HTTP on any port you want using -httpPort=SOME_PORT.  You could even run it over HTTPS on a different port using -httpsPort=SOME_WEIRD_PORT though you probably wouldn't want to do that._ 
