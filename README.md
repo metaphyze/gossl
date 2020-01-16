@@ -73,7 +73,7 @@ Which will print out this.
     [Service]
     WorkingDirectory=/some/unimportant/directory
 
-    ExecStart=/path/to/gossl -simpleProxy=http:localhost:8080 -domains=mydomain.com,www.mydomain.com
+    ExecStart=/path/to/gossl -simpleProxy=http://localhost:8080 -domains=mydomain.com,www.mydomain.com
     Restart=always
     RestartSec=10
 
