@@ -191,7 +191,7 @@ _Note that you do NOT have to use gossl to serve HTTPS requests.  You can run it
             ]
         }
 
-        Proxy requests inbound to / to / on localhost:8080 via http.  This is equivalent to -simpleProxy=http:localhost:8080.
+        Proxy requests inbound to / to / on localhost:8080 via http.  This is equivalent to -simpleProxy=http://localhost:8080.
         ---------------------------------------------------------------------------------------------------------------------
         {
           "Mappings" : [
