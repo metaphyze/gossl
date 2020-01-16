@@ -173,7 +173,7 @@ Proxy requests inbound to /api to /api on localhost via http.
     ]
 }
 
-Proxy requests inbound to / to / on localhost:8080 via http.  This is equivalent to -simpleProxy=http:localhost:8080.
+Proxy requests inbound to / to / on localhost:8080 via http.  This is equivalent to -simpleProxy=http://localhost:8080.
 ---------------------------------------------------------------------------------------------------------------------
 {
   "Mappings" : [
@@ -573,7 +573,7 @@ After=network.target
 [Service]
 WorkingDirectory=/some/unimportant/directory
 
-ExecStart=/path/to/gossl -simpleProxy=http:localhost:8080 -domains=mydomain.com,www.mydomain.com
+ExecStart=/path/to/gossl -simpleProxy=http://localhost:8080 -domains=mydomain.com,www.mydomain.com
 Restart=always
 RestartSec=10
 
