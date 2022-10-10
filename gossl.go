@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
-	"go-server-go/proxyconfig"
+	"github.com/metaphyze/gossl/proxyconfig"
 	"golang.org/x/crypto/acme/autocert"
 	"io"
 	"io/ioutil"
@@ -48,13 +48,16 @@ var proxyUrlMap map[string]*url2.URL
 var simpleReverseProxy *httputil.ReverseProxy
 var simpleProxyURL *url2.URL
 
-type handler struct{}
-
-func (theHandler *handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	processRequest(writer, request)
+type handler struct {
+	protocol string
+	port     int
 }
 
-func processRequest(writer http.ResponseWriter, request *http.Request) {
+func (theHandler *handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	processRequest(theHandler, writer, request)
+}
+
+func processRequest(theHandler *handler, writer http.ResponseWriter, request *http.Request) {
 	if simpleReverseProxy != nil {
 		request.URL.Scheme = simpleProxyURL.Scheme
 		request.Host = simpleProxyURL.Host
@@ -70,7 +73,7 @@ func processRequest(writer http.ResponseWriter, request *http.Request) {
 			for _, proxyConfig := range PROXY_CONFIG.Mappings {
 				localPath := proxyConfig.LocalPath
 				if localPath == "/" || strings.EqualFold(lowercasePath, localPath) || strings.HasPrefix(lowercasePath, localPath+"/") {
-					processProxyRequest(proxyConfig, writer, request)
+					processProxyRequest(theHandler, proxyConfig, writer, request)
 					return
 				}
 			}
@@ -110,7 +113,7 @@ func processRequest(writer http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func processProxyRequest(proxyConfig *proxyconfig.ProxyMapping, writer http.ResponseWriter, request *http.Request) {
+func processProxyRequest(theHandler *handler, proxyConfig *proxyconfig.ProxyMapping, writer http.ResponseWriter, request *http.Request) {
 	proxyUrl := proxyUrlMap[proxyConfig.LocalPath]
 	reverseProxy := reverseProxyMap[proxyConfig.LocalPath]
 
@@ -126,9 +129,9 @@ func processProxyRequest(proxyConfig *proxyconfig.ProxyMapping, writer http.Resp
 	}
 	request.URL.Scheme = proxyUrl.Scheme
 	request.Host = proxyUrl.Host
-	if proxyConfig.UseHTTPS {
-		request.Header.Set("X-Forwarded-Host", request.Host)
-	}
+	request.Header.Set("X-Forwarded-Host", request.Host)
+	request.Header.Set("X-Forwarded-Port", fmt.Sprintf("%v", theHandler.port))
+	request.Header.Set("X-Forwarded-Proto", theHandler.protocol)
 
 	reverseProxy.ServeHTTP(writer, request)
 }
@@ -491,9 +494,16 @@ Proxy requests inbound to /api1 to /api on yourdomain1.com via https, and proxy 
 		}
 
 		httpsServer := &http.Server{
-			Addr:         fmt.Sprintf(":%v", *httpsPort),
-			Handler:      &handler{},
-			TLSConfig:    &tls.Config{GetCertificate: certManager.GetCertificate},
+			Addr:    fmt.Sprintf(":%v", *httpsPort),
+			Handler: &handler{protocol: "https", port: *httpsPort},
+			TLSConfig: &tls.Config{
+				GetCertificate: certManager.GetCertificate,
+				CurvePreferences: []tls.CurveID{
+					tls.CurveP256,
+					tls.X25519,
+				},
+				MinVersion: tls.VersionTLS12,
+			},
 			ReadTimeout:  time.Duration(*readTimeoutInMs) * time.Millisecond,
 			WriteTimeout: time.Duration(*writeTimeoutInMs) * time.Millisecond,
 			IdleTimeout:  time.Duration(*idleTimeoutInMs) * time.Millisecond,
@@ -513,9 +523,9 @@ Proxy requests inbound to /api1 to /api on yourdomain1.com via https, and proxy 
 
 	if certManager != nil {
 		// We need to wrap our handler so that we can accept challenges from Let's Encrypt
-		httpHander = certManager.HTTPHandler(&handler{})
+		httpHander = certManager.HTTPHandler(&handler{protocol: "http", port: *httpPort})
 	} else {
-		httpHander = &handler{}
+		httpHander = &handler{protocol: "http", port: *httpPort}
 	}
 
 	httpServer := &http.Server{
