@@ -58,13 +58,18 @@ func (theHandler *handler) ServeHTTP(writer http.ResponseWriter, request *http.R
 }
 
 func processRequest(theHandler *handler, writer http.ResponseWriter, request *http.Request) {
+
 	if simpleReverseProxy != nil {
 		request.URL.Scheme = simpleProxyURL.Scheme
-		request.Host = simpleProxyURL.Host
 
 		if strings.EqualFold(simpleProxyURL.Scheme, "https") {
 			request.Header.Set("X-Forwarded-Host", request.Host)
+			request.Header.Set("X-Forwarded-Port", fmt.Sprintf("%v", theHandler.port))
+			request.Header.Set("X-Forwarded-Proto", theHandler.protocol)
+
 		}
+
+		request.Host = simpleProxyURL.Host
 
 		simpleReverseProxy.ServeHTTP(writer, request)
 	} else {
@@ -128,10 +133,10 @@ func processProxyRequest(theHandler *handler, proxyConfig *proxyconfig.ProxyMapp
 		request.URL.Path = newPath
 	}
 	request.URL.Scheme = proxyUrl.Scheme
-	request.Host = proxyUrl.Host
 	request.Header.Set("X-Forwarded-Host", request.Host)
 	request.Header.Set("X-Forwarded-Port", fmt.Sprintf("%v", theHandler.port))
 	request.Header.Set("X-Forwarded-Proto", theHandler.protocol)
+	request.Host = proxyUrl.Host
 
 	reverseProxy.ServeHTTP(writer, request)
 }
