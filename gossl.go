@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"compress/gzip"
 	"crypto/tls"
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/metaphyze/gossl/proxyconfig"
@@ -38,6 +40,7 @@ const MIN_IDLE_TIMEOUT_MS = 5 * 1000       //  5 seconds
 const MAX_IDLE_TIMEOUT_MS = 5 * 60 * 1000  // 5 minutes
 
 var STATIC_CONTENT_DIR string
+var STATIC_CONTENT_DIR_MAP map[string]string
 var CACHE_CONTROL_PRIVATE bool
 var CACHE_CONTROL_MAX_AGE_IN_SECONDS int
 var DONT_GZIP_STATIC_CONTENT_RESPONSES bool
@@ -57,8 +60,36 @@ func (theHandler *handler) ServeHTTP(writer http.ResponseWriter, request *http.R
 	processRequest(theHandler, writer, request)
 }
 
-func processRequest(theHandler *handler, writer http.ResponseWriter, request *http.Request) {
+func serverStaticFile(staticDir string, writer http.ResponseWriter, request *http.Request) {
+	var sb strings.Builder
+	if CACHE_CONTROL_PRIVATE {
+		sb.WriteString("private, ")
+	} else {
+		sb.WriteString("public, ")
+	}
 
+	sb.WriteString(fmt.Sprintf("max-age=%v", CACHE_CONTROL_MAX_AGE_IN_SECONDS))
+	writer.Header().Set("Cache-Control", sb.String())
+
+	if DONT_GZIP_STATIC_CONTENT_RESPONSES || !strings.Contains(request.Header.Get("Accept-Encoding"), "gzip") {
+		http.ServeFile(writer, request, staticDir+string(os.PathSeparator)+request.URL.Path)
+	} else {
+		// SEE: https://gist.github.com/CJEnright/bc2d8b8dc0c1389a9feeddb110f822d7
+
+		writer.Header().Set("Content-Encoding", "gzip")
+
+		gz := gzPool.Get().(*gzip.Writer)
+		defer gzPool.Put(gz)
+
+		gz.Reset(writer)
+		defer gz.Close()
+
+		http.ServeFile(&gzipResponseWriter{ResponseWriter: writer, Writer: gz}, request, staticDir+string(os.PathSeparator)+request.URL.Path)
+	}
+}
+
+func processRequest(theHandler *handler, writer http.ResponseWriter, request *http.Request) {
+	targetHost := strings.ToLower(request.Host)
 	if simpleReverseProxy != nil {
 		request.URL.Scheme = simpleProxyURL.Scheme
 		request.Header.Set("X-Forwarded-Host", request.Host)
@@ -79,33 +110,13 @@ func processRequest(theHandler *handler, writer http.ResponseWriter, request *ht
 			}
 		}
 
-		if STATIC_CONTENT_DIR != "" {
-			var sb strings.Builder
-			if CACHE_CONTROL_PRIVATE {
-				sb.WriteString("private, ")
-			} else {
-				sb.WriteString("public, ")
+		if len(STATIC_CONTENT_DIR_MAP) > 0 {
+			staticDir := STATIC_CONTENT_DIR_MAP[targetHost]
+			if staticDir != "" {
+				serverStaticFile(staticDir, writer, request)
 			}
-
-			sb.WriteString(fmt.Sprintf("max-age=%v", CACHE_CONTROL_MAX_AGE_IN_SECONDS))
-			writer.Header().Set("Cache-Control", sb.String())
-
-			if DONT_GZIP_STATIC_CONTENT_RESPONSES || !strings.Contains(request.Header.Get("Accept-Encoding"), "gzip") {
-				http.ServeFile(writer, request, STATIC_CONTENT_DIR+string(os.PathSeparator)+request.URL.Path)
-			} else {
-				// SEE: https://gist.github.com/CJEnright/bc2d8b8dc0c1389a9feeddb110f822d7
-
-				writer.Header().Set("Content-Encoding", "gzip")
-
-				gz := gzPool.Get().(*gzip.Writer)
-				defer gzPool.Put(gz)
-
-				gz.Reset(writer)
-				defer gz.Close()
-
-				http.ServeFile(&gzipResponseWriter{ResponseWriter: writer, Writer: gz}, request, STATIC_CONTENT_DIR+string(os.PathSeparator)+request.URL.Path)
-			}
-
+		} else if STATIC_CONTENT_DIR != "" {
+			serverStaticFile(STATIC_CONTENT_DIR, writer, request)
 		} else {
 			writer.WriteHeader(http.StatusNotFound)
 		}
@@ -148,6 +159,10 @@ func main() {
 		staticDir = flag.String("staticDir", "", "Directory of static content to serve\nFor example, -staticDir=/path/to/static/content/dir\n"+
 			"If -proxyConfigFile is specified, the request will first be checked against proxy mappings.\n"+
 			"If no proxy mapping is found, then we attempt to serve the request from this static content.")
+		staticDirMapFile = flag.String("staticDirMapFile", "", "File containing domain to directory of static content to serve\nFor example, -staticDirMapFile=/path/to/static/content/defintion/file\n"+
+			"If -proxyConfigFile is specified, the request will first be checked against proxy mappings.\n"+
+			"If no proxy mapping is found, then we attempt to serve the request from this static content.\n"+
+			"The lines of file should be of the form KEY=VALUE where the KEY is the domain and VALUE is the full path of the static content directory.")
 		proxyConfigFile = flag.String("proxyConfigFile", "", "JSON file containing the proxy mappings\nFor example, -proxyConfigFile=/path/to/proxy.config\nExamples files:\n"+
 			`Proxy requests inbound to /proxy/api to /api on a different server via https.
 -----------------------------------------------------------------------------
@@ -320,7 +335,18 @@ Proxy requests inbound to /api1 to /api on yourdomain1.com via https, and proxy 
 		}
 	}
 
-	if *staticDir != "" {
+	if *staticDirMapFile != "" {
+		STATIC_CONTENT_DIR_MAP, err = LoadDomainStaticDirMapFile(*staticDirMapFile)
+
+		if err != nil {
+			log.Fatalf("Error reading static content map file %v: %v", *staticDirMapFile, err)
+		}
+
+		CACHE_CONTROL_PRIVATE = *cacheControlPrivate
+		CACHE_CONTROL_MAX_AGE_IN_SECONDS = *cacheControlMaxAgeInSeconds
+		STATIC_CONTENT_DIR = "" // STATIC_CONTENT_DIR_MAP overrides STATIC_CONTENT_DIR
+		DONT_GZIP_STATIC_CONTENT_RESPONSES = *dontGzipStaticResponse
+	} else if *staticDir != "" {
 		stats, err := os.Stat(*staticDir)
 
 		if stats == nil || os.IsNotExist(err) {
@@ -642,4 +668,52 @@ func (w *gzipResponseWriter) WriteHeader(status int) {
 
 func (w *gzipResponseWriter) Write(b []byte) (int, error) {
 	return w.Writer.Write(b)
+}
+
+// LoadKeyValueFile reads a file with KEY=VALUE lines and returns a map[string]string.
+// It skips blank lines and lines starting with "#" (with optional leading spaces).
+// Keys and values are trimmed of whitespace.
+// If the file can't be found or read, it returns an error.
+func LoadDomainStaticDirMapFile(filename string) (map[string]string, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	result := make(map[string]string)
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+
+		// Skip empty lines
+		if line == "" {
+			continue
+		}
+
+		// Skip comments (possibly preceded by whitespace)
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		// Find first '='
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+			return nil, errors.New("invalid line (missing '='): " + line)
+		}
+
+		key := strings.TrimSpace(parts[0])
+		key = strings.ToLower(key)
+		value := strings.TrimSpace(parts[1])
+
+		result[key] = value
+		log.Printf("STATIC_CONTENT. %v=%v\n", key, value)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
