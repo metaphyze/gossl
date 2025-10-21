@@ -135,9 +135,13 @@ func processRequest(theHandler *handler, writer http.ResponseWriter, request *ht
 	}
 }
 
+func getReverseProxyKey(proxyConfig *ProxyMapping) string {
+	return fmt.Sprintf("%v:%v", proxyConfig.LocalPath, proxyConfig.Port)
+}
+
 func processProxyRequest(theHandler *handler, proxyConfig *ProxyMapping, writer http.ResponseWriter, request *http.Request) {
-	proxyUrl := proxyUrlMap[proxyConfig.LocalPath]
-	reverseProxy := reverseProxyMap[proxyConfig.LocalPath]
+	proxyUrl := proxyUrlMap[getReverseProxyKey(proxyConfig)]
+	reverseProxy := reverseProxyMap[getReverseProxyKey(proxyConfig)]
 
 	request.URL.Host = proxyUrl.Host
 	if proxyConfig.LocalPath != proxyConfig.RemotePath {
@@ -414,9 +418,8 @@ Proxy requests inbound to /api1 to /api on yourdomain1.com via https, and proxy 
 				if err != nil {
 					log.Fatalf("Error parsing %v", urlStr)
 				} else {
-					proxyPath := proxyConfig.LocalPath
-					reverseProxyMap[proxyPath] = httputil.NewSingleHostReverseProxy(url)
-					proxyUrlMap[proxyPath] = url
+					reverseProxyMap[getReverseProxyKey(proxyConfig)] = httputil.NewSingleHostReverseProxy(url)
+					proxyUrlMap[getReverseProxyKey(proxyConfig)] = url
 				}
 			}
 		}
